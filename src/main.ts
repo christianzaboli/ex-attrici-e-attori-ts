@@ -26,8 +26,7 @@ type Actress = Person & {
 
 // typeguard di supporto per il fetch asyncrono sottostate
 function isActress(data: unknown): data is Actress {
-  if (
-    data &&
+  return (
     typeof data === "object" &&
     data !== null &&
     "id" in data &&
@@ -43,19 +42,16 @@ function isActress(data: unknown): data is Actress {
     "image" in data &&
     typeof data.image === "string" &&
     "most_famous_movies" in data &&
-    Array.isArray(data.most_famous_movies) &&
+    data.most_famous_movies instanceof Array &&
     data.most_famous_movies.length === 3 &&
     data.most_famous_movies.every((e) => typeof e === "string") &&
     "awards" in data &&
     typeof data.awards === "string" &&
     "nationality" in data &&
     typeof data.nationality === "string"
-  ) {
-    return true;
-  } else {
-    return false;
-  }
+  );
 }
+// ONE FETCH
 async function getActress(id: number): Promise<Actress | null> {
   try {
     const response = await fetch(`http://localhost:3333/actresses/${id}`);
@@ -66,7 +62,7 @@ async function getActress(id: number): Promise<Actress | null> {
     return data;
   } catch (error) {
     if (error instanceof Error) {
-      console.error("errore nel recupero", error);
+      console.error(`errore nel recupero di id ${id}`, error);
     } else {
       console.error("errore sconosciuto", error);
     }
@@ -75,6 +71,7 @@ async function getActress(id: number): Promise<Actress | null> {
 }
 getActress(2).then((res) => console.log(res));
 
+// FULL FETCH
 async function getAllActresses(): Promise<Actress[]> {
   try {
     const response = await fetch("http://localhost:3333/actresses");
@@ -93,8 +90,24 @@ async function getAllActresses(): Promise<Actress[]> {
     return [];
   }
 }
-getAllActresses().then((res) => console.log(res));
 
+// MULTI FETCH
+async function getActresses(ids: number[]): Promise<(Actress | null)[]> {
+  try {
+    const promises = ids.map((id) => getActress(id));
+    return await Promise.all(promises);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("errore nel recupero", error);
+    } else {
+      console.error("errore sconosciuto", error);
+    }
+    return [];
+  }
+}
+getActresses([1, 2, 3]).then((res) => console.log(res));
+
+// html
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
     <h1>Just some - more - TypeScript Snacks!</h1>
