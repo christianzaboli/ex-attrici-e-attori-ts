@@ -29,6 +29,7 @@ function isActress(data: unknown): data is Actress {
   if (
     data &&
     typeof data === "object" &&
+    data !== null &&
     "id" in data &&
     typeof data.id === "number" &&
     "name" in data &&
@@ -43,6 +44,8 @@ function isActress(data: unknown): data is Actress {
     typeof data.image === "string" &&
     "most_famous_movies" in data &&
     Array.isArray(data.most_famous_movies) &&
+    data.most_famous_movies.length === 3 &&
+    data.most_famous_movies.every((e) => typeof e === "string") &&
     "awards" in data &&
     typeof data.awards === "string" &&
     "nationality" in data &&
@@ -57,15 +60,31 @@ async function getActress(id: number): Promise<Actress | null> {
   try {
     const response = await fetch(`http://localhost:3333/actresses/${id}`);
     const data = await response.json();
-    if (isActress(data)) {
-      return data;
-    } else throw new Error("la risposta non ha il formato giusto");
+    if (!isActress(data)) {
+      throw new Error("la risposta non ha il formato giusto");
+    }
+    return data;
   } catch (error) {
-    console.error(error);
+    if (error instanceof Error) {
+      console.error("errore nel recupero", error);
+    } else {
+      console.error("errore sconosciuto", error);
+    }
     return null;
   }
 }
 getActress(2).then((res) => console.log(res));
+
+async function getAllActresses(): Promise<Actress[]> {
+  try {
+    const response = await fetch(`http://localhost:3333/actresses`);
+    const data = await response.json();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+getAllActresses();
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
