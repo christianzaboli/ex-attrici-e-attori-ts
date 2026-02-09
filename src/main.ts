@@ -77,14 +77,23 @@ getActress(2).then((res) => console.log(res));
 
 async function getAllActresses(): Promise<Actress[]> {
   try {
-    const response = await fetch(`http://localhost:3333/actresses`);
-    const data = await response.json();
-    console.log(data);
+    const response = await fetch("http://localhost:3333/actresses");
+    const data: unknown = await response.json();
+    if (!(data instanceof Array)) {
+      throw new Error("la risposta non ha il formato giusto");
+    }
+    const validActresses: Actress[] = data.filter((a) => isActress(a));
+    return validActresses;
   } catch (error) {
-    console.error(error);
+    if (error instanceof Error) {
+      console.error("errore nel recupero", error);
+    } else {
+      console.error("errore sconosciuto", error);
+    }
+    return [];
   }
 }
-getAllActresses();
+getAllActresses().then((res) => console.log(res));
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
