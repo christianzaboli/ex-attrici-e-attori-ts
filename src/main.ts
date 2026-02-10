@@ -92,7 +92,7 @@ function isActor(data: unknown): data is Actor {
   );
 }
 
-// ONE FETCH
+// ONE FETCH -----------------------------------------------------------------------
 // F
 async function getActress(id: number): Promise<Actress | null> {
   try {
@@ -133,7 +133,8 @@ async function getActor(id: number): Promise<Actor | null> {
 }
 getActor(1).then((res) => console.log("Risultato di getActor", res));
 
-// FULL FETCH
+// FULL FETCH -----------------------------------------------------------------------
+// F
 async function getAllActresses(): Promise<Actress[]> {
   try {
     const response = await fetch("http://localhost:3333/actresses");
@@ -153,7 +154,28 @@ async function getAllActresses(): Promise<Actress[]> {
   }
 }
 
-// MULTI FETCH
+// M
+async function getAllActors(): Promise<Actor[]> {
+  try {
+    const response = await fetch("http://localhost:3333/actors");
+    const data: unknown = await response.json();
+    if (!(data instanceof Array)) {
+      throw new Error("la risposta non ha il formato giusto");
+    }
+    const validActors: Actor[] = data.filter((a) => isActor(a));
+    return validActors;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("errore nel recupero", error);
+    } else {
+      console.error("errore sconosciuto", error);
+    }
+    return [];
+  }
+}
+
+// MULTI FETCH -----------------------------------------------------------------------
+// F
 async function getActresses(ids: number[]): Promise<(Actress | null)[]> {
   try {
     const promises = ids.map((id) => getActress(id));
@@ -167,18 +189,27 @@ async function getActresses(ids: number[]): Promise<(Actress | null)[]> {
     return [];
   }
 }
-getActresses([1, 2, 3]).then((res) => console.log(res));
+getActresses([1, 2, 3]).then((res) =>
+  console.log("Risultato di getActresses", res),
+);
 
-// 🎯 BONUS 1
-// Crea le funzioni:
+// M
+async function getActors(ids: number[]): Promise<(Actor | null)[]> {
+  try {
+    const promises = ids.map((id) => getActor(id));
+    return await Promise.all(promises);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("errore nel recupero", error);
+    } else {
+      console.error("errore sconosciuto", error);
+    }
+    return [];
+  }
+}
+getActors([1, 2, 3]).then((res) => console.log("Risultato di getActors", res));
 
-// createActress
-// updateActress
-// Utilizza gli Utility Types:
-
-// Omit: per creare un'attrice senza passare id, che verrà generato casualmente.
-// Partial: per permettere l’aggiornamento di qualsiasi proprietà tranne id e name.
-
+// bonus omit - partial
 function createActress(data: Omit<Actress, "id">): Actress {
   return {
     id: Math.floor(Math.random() * 100),
@@ -194,6 +225,59 @@ function updateActress(
     ...updates,
   };
 }
+
+// bonus 2
+async function createRandomCouple(): Promise<[Actress, Actor] | null> {
+  try {
+    const actorsRes = await fetch("http://localhost:3333/actors");
+    const actorsData: unknown = await actorsRes.json();
+    const actressRes = await fetch("http://localhost:3333/actresses");
+    const actressData: unknown = await actressRes.json();
+    if (!(actorsData instanceof Array) || !(actressData instanceof Array)) {
+      throw new Error("la risposta non ha il formato giusto");
+    }
+    const validActors: Actor[] = actorsData.filter((a) => isActor(a));
+    const validActresses: Actress[] = actressData.filter((a) => isActress(a));
+    return [
+      validActresses[Math.floor(Math.random() * validActresses.length)],
+      validActors[Math.floor(Math.random() * validActors.length)],
+    ];
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("errore nel recupero", error);
+    } else {
+      console.error("errore sconosciuto", error);
+    }
+    return null;
+  }
+}
+// bonus 2 versione piu' carina
+async function createRandomCouple2(): Promise<[Actress, Actor] | null> {
+  try {
+    const [actresses, actors] = await Promise.all([
+      getAllActresses(),
+      getAllActors(),
+    ]);
+    if (actresses.length === 0 || actors.length === 0) return null;
+    return [
+      actresses[Math.floor(Math.random() * actresses.length)],
+      actors[Math.floor(Math.random() * actors.length)],
+    ];
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("errore nel recupero", error);
+    } else {
+      console.error("errore sconosciuto", error);
+    }
+    return null;
+  }
+}
+createRandomCouple().then((res) =>
+  console.log("Risultato di createRandomCouple", res),
+);
+createRandomCouple2().then((res) =>
+  console.log("Risultato di createRandomCouple2", res),
+);
 // html
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
